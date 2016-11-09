@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js canvas - geometry - cube</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script src="../build/three.js"></script>
+
+		<script src="js/renderers/Projector.js"></script>
+		<script src="js/renderers/CanvasRenderer.js"></script>
+
+		<script type='text/javascript' src='tween.js'></script>	
+
+		<script type="text/javascript">
+			var cubeLength = 100;
+			
+			var tweenTime = 500;
+
+			var xOffset = -100;
+			var yOffset = -200;
+			var zOffset = -100;
+
+			var numbers = {
+				9:{
+					0:{ 0 : false, 1 : false, 2 : true, 3 : true, 4 : true },
+					1:{ 0 : false, 1 : false, 2 : true,  3 : false,  4 : true },
+					2:{ 0 : true,  1 : true, 2 : true, 3 : true, 4 : true }
+				},
+				8:{
+					0:{ 0 : true, 1 : true, 2 : true, 3 : true, 4 : true },
+					1:{ 0 : true, 1 : false, 2 : true,  3 : false,  4 : true },
+					2:{ 0 : true,  1 : true, 2 : true, 3 : true, 4 : true }
+				},
+				7:{
+					0:{ 0 : false, 1 : false, 2 : false, 3 : false, 4 : true },
+					1:{ 0 : false, 1 : false, 2 : false, 3 : false, 4 : true },
+					2:{ 0 : true, 1 : true, 2 : true, 3 : true, 4 : true }
+				},
+				6:{
+					0:{ 0 : true, 1 : true, 2 : true, 3 : true, 4 : true },
+					1:{ 0 : true, 1 : false, 2 : true, 3 : false, 4 : true },
+					2:{ 0 : true, 1 : true, 2 : true, 3 : false, 4 : true }
+				},
+				5:{
+					0:{ 0 : true, 1 : false, 2 : true, 3 : true, 4 : true },
+					1:{ 0 : true, 1 : false, 2 : true, 3 : false, 4 : true },
+					2:{ 0 : true, 1 : true, 2 : true, 3 : false, 4 : true }
+				},
+				4:{
+					0:{ 0 : false, 1 : false, 2 : true, 3 : true, 4 : true },
+					1:{ 0 : false, 1 : false, 2 : true, 3 : false, 4 : false },
+					2:{ 0 : true, 1 : true, 2 : true, 3 : true, 4 : true }
+				},
+				3:{
+					0:{ 0 : true, 1 : false, 2 : true, 3 : false, 4 : true },
+					1:{ 0 : true, 1 : false, 2 : true,  3 : false,  4 : true },
+					2:{ 0 : true, 1 : true, 2 : true, 3 : true, 4 : true }
+				},
+				2:{
+					0:{ 0 : true,  1 : true, 2 : true, 3 : false, 4 : true },
+					1:{ 0 : true, 1 : false, 2 : true,  3 : false,  4 : true },
+					2:{ 0 : true,  1 : false, 2 : true, 3 : true, 4 : true }
+				},
+				1:{
+					0:{ 0 : true,  1 : false, 2 : false, 3 : false, 4 : true },
+					1:{ 0 : true, 1 : true, 2:true, 3 : true,  4 : true },
+					2:{ 0 : true, 1 : false, 2 : false, 3 : false, 4 : false }
+				},
+				0:{
+					0:{ 0 : true, 1 : true, 2 : true, 3 : true, 4 : true },
+					1:{ 0 : true, 1 : false, 2 : false, 3 : false, 4 : true },
+					2:{ 0 : true, 1 : true, 2 : true, 3 : true, 4 : true }
+				}
+			}
+		</script>
+
+		<script>
+
+			var container;
+
+			var camera, scene, renderer;
+
+			var cube, plane;
+
+			var targetRotation = 0;
+			var targetRotationOnMouseDown = 0;
+
+			var mouseX = 0;
+			var mouseXOnMouseDown = 0;
+
+			var windowHalfX = window.innerWidth / 2;
+			var windowHalfY = window.innerHeight / 2;
+
+			init();
+			animate();
+
+			function init() {
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				camera = new THREE.PerspectiveCamera( 1, window.innerWidth / window.innerHeight, 50, 500000 );
+				camera.position.y = 0;
+				camera.position.z = 200000;
+
+				scene = new THREE.Scene();
+
+				// Plane
+				var geometry = new THREE.PlaneBufferGeometry( cubeLength, cubeLength );
+				geometry.rotateX( - Math.PI / 2 );
+
+				var material = new THREE.MeshBasicMaterial( { color: 0xffffff, overdraw: 0.5 } );
+
+				plane = new THREE.Mesh( geometry, material );
+				scene.add( plane );
+
+				renderer = new THREE.CanvasRenderer();
+				renderer.setClearColor( 0x000000 );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				var d = new Date();
+
+				var n1 = (d.getSeconds() % 10);
+				n1 = 0;
+
+				// Cube
+				var offsetArr = [-1200,-800,-200,200,800,1200];
+				chars = [];
+				for( var i=0; i<6; i++)
+				{
+					chars[i] = makeCharBase( cubeLength, offsetArr[i] );
+					scene.add( chars[i].object3D )
+
+					console.log( chars[i].offset )
+
+					drive( n1, 1, chars[i] );
+				}
+				startSetTime()
+			}
+
+			function startSetTime()
+			{
+				var dat = (new Date());
+				
+				var hour = dat.getHours()
+				hour = hour > 12 ? hour - 12 : hour;
+				
+				var h1 = parseInt(hour/10);
+				var h2 = hour%10;
+				var m1 = parseInt(dat.getMinutes()/10)
+				var m2 = dat.getMinutes()%10
+				var s1 = parseInt(dat.getSeconds()/10);
+				var s2 = dat.getSeconds()%10
+				
+				setTime( [h1,h2,m1,m2,s1,s2] );
+				
+				setTimeout( startSetTime, 1000 );
+			}
+
+			function setTime( toSetArr )
+			{
+				if( toSetArr.length !== chars.length ){console.log( "number of chars not equal to number of elements in the array" );return; }
+
+				for( var i=0; i<toSetArr.length; i++)
+				{
+					setIndividualTime( toSetArr[i], chars[i] );
+				}
+			}
+			
+			function setIndividualTime( toSet, charObj )
+				{
+					//debugger;
+					var firstNumber = toSet;
+					var secondNumber = firstNumber < 9 ? firstNumber+1 : 0;	
+					
+					if( toSet != charObj.current )  // face is not what you want
+					{
+						updateCube( charObj.current, firstNumber, charObj)
+						rotate( charObj )
+					}
+					
+					setTimeout(function(){
+						updateCube( firstNumber, secondNumber, charObj)
+						resetRotate( charObj );
+					}, tweenTime+50);
+					
+				}
+			//*/
+			function drive( firstNumber, secondNumber, charObj )
+			{
+				updateCube( firstNumber, secondNumber, charObj );
+				rotate( charObj );
+
+				if( firstNumber > 9 )
+				{
+					firstNumber = 0;
+				}
+				else if( firstNumber < 0 )
+				{
+					firstNumber = 9;
+				}
+
+				if( secondNumber > 9 )
+				{
+					secondNumber = 0;
+				}
+				else if( secondNumber < 0 )
+				{
+					secondNumber = 9;
+				}
+
+				setTimeout( function()
+				{
+					resetRotate( charObj );
+					//drive( firstNumber, increment, charObj); 
+
+				} , tweenTime+50)
+
+				charObj.current = firstNumber
+				charObj.next = secondNumber;
+			}
+			//*/
+
+			function updateCube( charToShow, nextChar, charObj )
+			{
+				var cubeArr = charObj.cubeArr 
+				for( var i=0; i<cubeArr.length; i++ )
+				{
+					for( var j=0; j<cubeArr[i].length; j++ )
+					{
+						for( var k=0; k<cubeArr[i][j].length; k++ )
+						{
+							if( !numbers[charToShow][i][j] || !numbers[nextChar][k][j]  ) // TODO change back
+							{
+								cubeArr[i][j][k].geometry = new THREE.BoxGeometry( 0, 0, 0 )
+							}
+							else
+							{
+								cubeArr[i][j][k].geometry = new THREE.BoxGeometry( cubeLength, cubeLength, cubeLength )
+							}
+						}
+					}
+				}
+				charObj.current = charToShow;
+				charObj.next = nextChar;
+			}
+
+			function makeCharBase( cubeLength, extraOffset )
+			{
+				var  char = {}
+				var object3D = new THREE.Object3D();
+
+				var cubeArr = [];
+
+				for( var a = 0; a<3; a++ ) // controls width
+				{
+					cubeArr[a] = []
+					for( var b=0; b<5; b++ ) // controls height 
+					{
+						cubeArr[a][b] = [];
+						for( var c=0; c<3; c++ ) // controls depth
+						{
+							var cube = makeCube( cubeLength, a, b, c );
+							//scene.add( cube );
+
+							cubeArr[a][b][c] = cube;
+
+							object3D.add( cube );
+						}
+					}
+				}
+
+				char.object3D = object3D;
+				char.cubeArr = cubeArr;
+				char.offset = {x:extraOffset, y:0, z:0 };
+
+				return char;
+			}
+
+			function makeCube( cubeLength, cubeX, cubeY, cubeZ )
+			{
+				var geometry = new THREE.BoxGeometry( cubeLength, cubeLength, cubeLength );
+
+				for ( var i = 0; i < geometry.faces.length; i += 2 ) {
+
+					var hex = 0x000000;
+					geometry.faces[ i ].color.setHex( hex );
+					geometry.faces[ i + 1 ].color.setHex( hex );
+
+				}
+
+				var transparency = numbers[8][cubeX][cubeY] ? 1 : 0;
+				//console.log( numbers[8][cubeX][cubeY] )
+				//console.log( transparency )
+
+				var material = new THREE.MeshBasicMaterial( { vertexColors: THREE.FaceColors, overdraw: 0.5, opacity: 1 } );
+
+				var cube = new THREE.Mesh( geometry, material );
+				cube.position.x = cubeX*100+xOffset;
+				cube.position.y = cubeY*100+yOffset;
+				cube.position.z = cubeZ*100+zOffset;	
+
+				//cube.position.z
+
+				return cube;
+
+			}
+
+			function onWindowResize() {
+
+				windowHalfX = window.innerWidth / 2;
+				windowHalfY = window.innerHeight / 2;
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+			}
+
+			var rotationChange = false;
+			
+			function rotate( char )
+			{
+				rotationChange = true;
+
+				//start tween
+				var rotation = new TWEEN.Tween( char.object3D.rotation )
+					.to( 
+						{
+							//x: Math.random() * 2 * Math.PI,
+							y: 1/2 * Math.PI//,
+							//z: Math.random() * 2 * Math.PI 
+						}, 
+						tweenTime 
+					)
+					//.onComplete( function(){ console.log( (new Date()).getSeconds() )} )
+					.onUpdate( function(){
+						return
+						object3D.postiion.x = -500;
+					})
+					.easing( TWEEN.Easing.Linear.None);
+
+				var translation = new TWEEN.Tween( char.object3D.position )
+					.to( char.offset );
+
+				translation.start()
+				rotation.start()
+				// end tween
+			}
+
+			function resetRotate( charObj )
+			{
+				plane.rotation.y = charObj.object3D.rotation.y = 0;
+				TWEEN.update();
+			}
+
+			function render() 
+			{
+				TWEEN.update();
+				renderer.render( scene, camera );
+			}
+
+		</script>
+	</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
