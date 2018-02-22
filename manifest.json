@@ -1,6 +1,6 @@
 {
 	"short_name": "Three.JS Clock",
-	"start_url": "/index.html",
+	"start_url": "index.html",
 	"display": "fullscreen",
 	"orientation": "landscape",
 	"icons": [
